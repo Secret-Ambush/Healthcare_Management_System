@@ -1,0 +1,68 @@
+const HospitalSearch = () => {
+  const { location, error: geoError } = useGeolocation();
+  const [hospitals, setHospitals] = useState([]);
+  const [mapCenter, setMapCenter] = useState({ lat: 37.7749, lng: -122.4194 });
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (location.latitude && location.longitude) {
+      setMapCenter({ lat: location.latitude, lng: location.longitude });
+
+      setLoading(true);
+
+      fetchNearbyHospitals(location.latitude, location.longitude, mapRef.current)
+        .then((data) => {
+          setHospitals(data);
+          setLoading(false);
+
+          if (mapRef.current) {
+            // Add markers logic here
+          }
+        })
+        .catch((err) => {
+          setFetchError(`Failed to load nearby hospitals: ${err.message}`);
+          setLoading(false);
+        });
+    }
+  }, [location]);
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="overflow-x-hidden">
+        <h1 className="text-center text-2xl font-bold my-6">Nearby Hospitals Locator (within 5km)</h1>
+        {geoError ? (
+          <p className="text-center text-red-500">{geoError}</p>
+        ) : fetchError ? (
+          <p className="text-center text-red-500">{fetchError}</p>
+        ) : (
+          <>
+            {!loading && hospitals.length > 0 && (
+              <HospitalList
+                hospitals={hospitals}
+                sortByRating={sortByRating}
+                sortByProximity={sortByProximity}
+                userLocation={location}
+              />
+            )}
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={mapCenter}
+              zoom={12}
+              onLoad={(map) => {
+                mapRef.current = map;
+                setIsMapReady(true);
+              }}
+            />
+          </>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default HospitalSearch;

@@ -1,0 +1,70 @@
+/* Ensure DatePicker input has a solid background */
+.custom-datepicker {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff; /* Solid background */
+    font-size: 16px;
+  }
+  
+  /* Focus styling */
+  .custom-datepicker:focus {
+    outline: none;
+    border-color: #3f51b5; /* Match primary theme color */
+  }
+  
+  /* Style the calendar pop-up */
+  .react-datepicker {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff; /* Ensure solid background for calendar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .react-datepicker__day--selected {
+    background-color: #3f51b5; /* Match primary theme color */
+    color: #fff;
+  }
+  
+  .react-datepicker__day--keyboard-selected {
+    background-color: #3f51b5;
+    color: #fff;
+  }
+
+  /* Wrapper to match the TextField container */
+.custom-datepicker-wrapper {
+    width: 100%;
+    padding-bottom: 15px;
+  }
+  
+  /* Style the DatePicker input to match TextField */
+  .custom-datepicker {
+    width: 100%;
+    padding: 10px 12px; /* Match TextField padding */
+    border: 1px solid #ccc; /* Match TextField border */
+    border-radius: 4px; /* Match TextField border radius */
+    font-size: 16px; /* Match TextField font size */
+    box-shadow: none;
+    background-color: #fff; /* Ensure consistent background */
+  }
+  
+  /* Focus state for consistency */
+  .custom-datepicker:focus {
+    outline: none;
+    border-color: #3f51b5; /* Match focus color of TextField */
+  }
+  
+  /* Calendar styles (optional, for better UX) */
+  .react-datepicker {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .react-datepicker__day--selected {
+    background-color: #3f51b5;
+    color: #fff;
+  }
+  
