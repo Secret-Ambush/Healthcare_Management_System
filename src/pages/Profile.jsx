@@ -1,40 +1,41 @@
+
 import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, Avatar, Grid2, Button, TextField, CircularProgress } from '@mui/material';
+import { Container, Box, Typography, Avatar, Grid, Button, TextField, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db } from '../firebase';
-import Navbar from "../components/Navbar/Navbar";
-import Footer from "../components/Footer/Footer";
+import Navbar from '../components/Navbar/Navbar';
+import Footer from '../components/Footer/Footer';
 import PersonIcon from '@mui/icons-material/Person';
-import { FormControl, FormHelperText } from "@mui/material";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import "../assets/stylesheet.css";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '../assets/stylesheet.css';
 import { Timestamp } from 'firebase/firestore';
 
+
 const ProfilePage = () => {
-  const [user, setUser] = useState(null); // User data from Firestore
-  const [editMode, setEditMode] = useState(false); // Toggle between view and edit mode
-  const [updatedUser, setUpdatedUser] = useState({}); // Store updated data during edit
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [user, setUser] = useState(null); 
+  const [editMode, setEditMode] = useState(false); 
+  const [updatedUser, setUpdatedUser] = useState({});
+  const [loading, setLoading] = useState(true); 
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         if (!auth.currentUser) {
-          console.error("No authenticated user found.");
+          console.error('No authenticated user found.');
           return;
         }
 
-        const userDoc = doc(db, "users", auth.currentUser.uid); // Fetch using UID
+        const userDoc = doc(db, 'users', auth.currentUser.uid); 
         const userSnapshot = await getDoc(userDoc);
 
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
 
-          // Convert Firestore Timestamp to Date
           setUser({
             ...userData,
             dob: userData.dob ? userData.dob.toDate() : null,
@@ -45,10 +46,10 @@ const ProfilePage = () => {
             dob: userData.dob ? userData.dob.toDate() : null,
           });
         } else {
-          console.error("User data not found in Firestore.");
+          console.error('User data not found in Firestore.');
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error('Error fetching user data:', error);
       } finally {
         setLoading(false);
       }
@@ -60,33 +61,59 @@ const ProfilePage = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate('/'); // Redirect to home page after logout
+      navigate('/'); 
     } catch (error) {
-      console.error("Error during logout:", error);
+      console.error('Error during logout:', error);
     }
   };
 
   const handleSave = async () => {
     try {
       if (auth.currentUser) {
-        const userDoc = doc(db, "users", auth.currentUser.uid);
+        const userDoc = doc(db, 'users', auth.currentUser.uid);
 
-        // Convert updatedUser.dob to Firestore Timestamp if it exists
         const updatedData = {
           ...updatedUser,
-          dob: updatedUser.dob ? Timestamp.fromDate(updatedUser.dob) : null, // Firestore-compatible format
+          dob: updatedUser.dob ? Timestamp.fromDate(updatedUser.dob) : null, 
         };
 
         await updateDoc(userDoc, updatedData);
 
-        // Update the local state with the saved data
         setUser(updatedData);
-        setEditMode(false); // Exit edit mode
-        alert("Profile updated successfully!");
+        setEditMode(false); 
+        alert('✅ Profile updated successfully!');
+        window.location.href = "/";
+
       }
     } catch (error) {
-      console.error("Error updating user data:", error);
-      alert("Failed to update profile. Please try again.");
+      console.error('Error updating user data:', error);
+      alert('Failed to update profile. Please try again.');
+    }
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      alert('Please select a file to upload.');
+      return;
+    }
+
+    try {
+      const storage = getStorage(); 
+      const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}`);
+      await uploadBytes(avatarRef, file); 
+      const avatarURL = await getDownloadURL(avatarRef); 
+
+      // Update Firestore with the avatar URL
+      const userDoc = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userDoc, { photo: avatarURL });
+
+      // Update local state
+      setUser((prevUser) => ({ ...prevUser, photo: avatarURL }));
+      alert('Avatar uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
     }
   };
 
@@ -137,6 +164,15 @@ const ProfilePage = () => {
           {/* User Details */}
           {editMode ? (
             <Box sx={{ width: '100%', maxWidth: 500 }}>
+              <Typography variant="body1" color="textSecondary">
+                <strong>Change Avatar:</strong>
+              </Typography>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                style={{ marginTop: '10px', width: '100%', paddingBottom: '15px' }}
+              />
               <TextField
                 label="Name"
                 fullWidth
@@ -151,8 +187,7 @@ const ProfilePage = () => {
                 placeholderText="Select Date of Birth"
                 className="custom-datepicker"
                 wrapperClassName="custom-datepicker-wrapper"
-                />
-                
+              />
               <TextField
                 select
                 label="Nationality"
@@ -160,12 +195,11 @@ const ProfilePage = () => {
                 value={updatedUser.nationality}
                 onChange={(e) => setUpdatedUser({ ...updatedUser, nationality: e.target.value })}
                 SelectProps={{
-                    native: true,
+                  native: true,
                 }}
                 sx={{ mb: 2 }}
-                >
+              >
                 <option value="" disabled>
-                    Select Nationality
                 </option>
                 <option value="American">American</option>
                 <option value="Indian">Indian</option>
@@ -174,20 +208,20 @@ const ProfilePage = () => {
                 <option value="Chinese">Chinese</option>
                 <option value="Japanese">Japanese</option>
                 <option value="Other">Other</option>
-                </TextField>
-                <TextField
+              </TextField>
+              <TextField
                 select
                 label="Blood Type"
                 fullWidth
                 value={updatedUser.bloodType}
                 onChange={(e) => setUpdatedUser({ ...updatedUser, bloodType: e.target.value })}
                 SelectProps={{
-                    native: true,
+                  native: true,
                 }}
                 sx={{ mb: 2 }}
-                >
+              >
                 <option value="" disabled>
-                    Select Blood Type
+                  Select Blood Type
                 </option>
                 <option value="A+">A+</option>
                 <option value="A-">A-</option>
@@ -197,41 +231,40 @@ const ProfilePage = () => {
                 <option value="O-">O-</option>
                 <option value="AB+">AB+</option>
                 <option value="AB-">AB-</option>
-                </TextField>
-                <TextField
+              </TextField>
+              <TextField
                 select
                 label="Preferred Language"
                 fullWidth
                 value={updatedUser.language}
                 onChange={(e) => setUpdatedUser({ ...updatedUser, language: e.target.value })}
                 SelectProps={{
-                    native: true,
+                  native: true,
                 }}
                 sx={{ mb: 2 }}
-                >
+              >
                 <option value="" disabled>
-                    Select Language
                 </option>
                 <option value="English">English</option>
                 <option value="Spanish">Spanish</option>
                 <option value="French">French</option>
                 <option value="Hindi">Hindi</option>
                 <option value="Mandarin">Mandarin</option>
-                </TextField>
-                <TextField
+              </TextField>
+              <TextField
                 label="Insurance Provider"
                 fullWidth
                 value={updatedUser.insuranceProvider}
                 onChange={(e) => setUpdatedUser({ ...updatedUser, insuranceProvider: e.target.value })}
                 sx={{ mb: 2 }}
-                />
-                <TextField
+              />
+              <TextField
                 label="Insurance Policy Number"
                 fullWidth
                 value={updatedUser.policyNumber}
                 onChange={(e) => setUpdatedUser({ ...updatedUser, policyNumber: e.target.value })}
                 sx={{ mb: 2 }}
-                />
+              />
               <Button variant="contained" color="primary" fullWidth onClick={handleSave}>
                 Save
               </Button>
@@ -244,46 +277,48 @@ const ProfilePage = () => {
               <Typography variant="h4" gutterBottom>
                 {user.name}
               </Typography>
-              <Grid2 container spacing={2} sx={{ maxWidth: 500 }}>
-                <Grid2 item xs={12}>
+              <Grid container spacing={2} sx={{ maxWidth: 500 }}>
+                <Grid item xs={12}>
                   <Typography variant="body1" color="textSecondary">
                     <strong>Email:</strong> {user.email}
                   </Typography>
-                </Grid2>
-                <Grid2 item xs={12}>
+                </Grid>
+                <Grid item xs={12}>
                   <Typography variant="body1" color="textSecondary">
                     <strong>Phone:</strong> {user.phone}
                   </Typography>
-                </Grid2>
-                <Typography variant="body1" color="textSecondary">
-                <strong>Date of Birth:</strong> {user.dob ? user.dob.toLocaleDateString() : "N/A"}
-                </Typography>
-                <Grid2 item xs={12}>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="textSecondary">
+                    <strong>Date of Birth:</strong> {user.dob ? user.dob.toLocaleDateString() : 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
                   <Typography variant="body1" color="textSecondary">
                     <strong>Nationality:</strong> {user.nationality}
                   </Typography>
-                </Grid2>
-                <Grid2 item xs={12}>
+                </Grid>
+                <Grid item xs={12}>
                   <Typography variant="body1" color="textSecondary">
                     <strong>Blood Type:</strong> {user.bloodType}
                   </Typography>
-                </Grid2>
-                <Grid2 item xs={12}>
-                    <Typography variant="body1" color="textSecondary">
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="textSecondary">
                     <strong>Preferred Language:</strong> {user.language}
-                    </Typography>
-                </Grid2>
-                <Grid2 item xs={12}>
-                    <Typography variant="body1" color="textSecondary">
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="textSecondary">
                     <strong>Insurance Provider:</strong> {user.insuranceProvider}
-                    </Typography>
-                </Grid2>
-                <Grid2 item xs={12}>
-                    <Typography variant="body1" color="textSecondary">
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="textSecondary">
                     <strong>Policy Number:</strong> {user.policyNumber}
-                    </Typography>
-                </Grid2>
-              </Grid2>
+                  </Typography>
+                </Grid>
+              </Grid>
               <Button variant="contained" color="primary" sx={{ mt: 3 }} onClick={() => setEditMode(true)}>
                 Edit Profile
               </Button>

@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
-import { useUser } from "../context/UserContext"; // Import UserContext
+import { useUser } from "../context/UserContext"; 
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
-import { Container, Box, Typography, TextField, Button } from "@mui/material";
+import { Container, Box, Typography, TextField, Button, Link } from "@mui/material";
+import { and } from "firebase/firestore";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser } = useUser(); // Get setUser from context
+  const [message, setMessage] = useState(""); 
+  const { setUser } = useUser(); 
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -19,12 +21,26 @@ function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      setUser(user); // Update context with logged-in user data
-      console.log("User signed in:", user);
+      setUser(user); 
       navigate("/");
     } catch (error) {
       console.error("Error signing in:", error);
-      alert(error.message);
+      setMessage("Username/Password is incorrect"); 
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setMessage("Please enter your email to reset your password.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setMessage("Password reset email sent. Please check your inbox or spam folder.");
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      setMessage("Error in Login In info"); 
     }
   };
 
@@ -58,15 +74,34 @@ function LoginPage() {
           <TextField
             label="Password"
             type="password"
-            required
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <Button variant="contained" color="primary" type="submit" fullWidth>
+          <Button variant="contained" color="primary" type="submit" fullWidth disabled={(!password || !email)}>
             Login
           </Button>
+
+          {message && (
+            <Typography variant="body2" color="error" textAlign="center" sx={{ mt: 2 }}>
+              {message}
+            </Typography>
+          )}
+
+          <Box textAlign="center">
+            <Typography variant="body2">
+              Forgot your password?{' '}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={handlePasswordReset}
+                underline="hover"
+              >
+                Reset Password
+              </Link>
+            </Typography>
+          </Box>
         </Box>
       </Container>
       <Footer />

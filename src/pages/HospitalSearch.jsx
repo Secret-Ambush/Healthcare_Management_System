@@ -111,9 +111,7 @@ const HospitalSearch = () => {
       return;
     }
   
-    if (location.latitude && location.longitude && isMapReady) {
-      console.log("Fetching hospitals for location:", location);
-  
+    if (location.latitude && location.longitude && isMapReady) {  
       setMapCenter({ lat: location.latitude, lng: location.longitude });
   
       setLoading(true);
@@ -121,7 +119,6 @@ const HospitalSearch = () => {
       // Fetch hospitals and update map
       fetchNearbyHospitals(location.latitude, location.longitude, mapRef.current)
         .then((data) => {
-          console.log("Hospitals fetched successfully:", data);
           setHospitals(data);
           setLoading(false);
   
@@ -219,7 +216,6 @@ const HospitalSearch = () => {
                 center={mapCenter}
                 zoom={12}
                 onLoad={(map) => {
-                  console.log("Google Map loaded successfully.");
                   mapRef.current = map;
                   setIsMapReady(true); // Mark map as ready
                 }}

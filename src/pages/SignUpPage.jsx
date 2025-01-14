@@ -24,38 +24,43 @@ function SignupPage() {
   const [policyNumber, setPolicyNumber] = useState("");
   const { setUser } = useUser(); // Get setUser from context
   const navigate = useNavigate();
+  const [emailVerified, setEmailVerified] = useState(false); // Track email verification
+  const [emailVerificationMessage, setEmailVerificationMessage] = useState("");
+  const passwordsDontMatch = "Passwords do not match!"
+  const weakPassword = "Please enter a password having a minimum length 6"
 
-  const handleSubmitStep1 = async (event) => {
-    event.preventDefault();
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-
+  const handleSendVerificationEmail = async () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       setUser(user); // Update context with the newly created user
-      console.log("User created:", user);
 
       await sendEmailVerification(user);
-      alert("Verification email sent! Check your inbox.");
-      setStep(2);
+      setEmailVerificationMessage("Please verify your email! Check your inbox or spam folder for verification link.");
+
+      const emailCheckInterval = setInterval(async () => {
+        await user.reload(); // Reload the user to fetch updated info
+        if (user.emailVerified) {
+          clearInterval(emailCheckInterval);
+          setEmailVerified(true);
+          setEmailVerificationMessage("✅ Email verified successfully!");
+        }
+      }, 3000); // Check every 3 seconds
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error sending verification email:", error);
       alert(error.message);
     }
   };
 
   const handleSubmitStep2 = async (event) => {
     event.preventDefault();
-  
+
     if (!auth.currentUser) {
       alert("User is not authenticated. Please log in.");
       return;
     }
-  
+
     try {
       const userDoc = doc(db, "users", auth.currentUser.uid); // Use UID as document ID
       await setDoc(userDoc, {
@@ -70,8 +75,7 @@ function SignupPage() {
         email: auth.currentUser.email,
         createdAt: new Date(),
       });
-  
-      alert("Sign-up process complete!");
+
       window.location.href = "/";
     } catch (error) {
       console.error("Error saving user data:", error.message);
@@ -86,7 +90,6 @@ function SignupPage() {
         {step === 1 ? (
           <Box
             component="form"
-            onSubmit={handleSubmitStep1}
             sx={{
               mt: 8,
               display: "flex",
@@ -99,12 +102,12 @@ function SignupPage() {
             </Typography>
 
             <TextField
-              label="Email"
-              type="email"
+              label="Name"
+              type="text"
               required
               fullWidth
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
 
             <TextField
@@ -116,6 +119,12 @@ function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
+            {password.length <6 && (
+              <Typography color="secondary" variant="body2">
+                {weakPassword}
+              </Typography>
+            )}
+
             <TextField
               label="Confirm Password"
               type="password"
@@ -125,7 +134,44 @@ function SignupPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
 
-            <Button variant="contained" color="primary" type="submit" fullWidth>
+            {password != confirmPassword && (
+              <Typography color="secondary" variant="body2">
+                {passwordsDontMatch}
+              </Typography>
+            )}
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <TextField
+                label="Email"
+                type="email"
+                required
+                fullWidth
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSendVerificationEmail}
+                disabled={!email }
+              >
+                Confirm Email
+              </Button>
+            </Box>
+
+            {emailVerificationMessage && (
+              <Typography color="secondary" variant="body2">
+                {emailVerificationMessage}
+              </Typography>
+            )}
+
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setStep(2)}
+              fullWidth
+              disabled={!emailVerified} // Disable until email is verified
+            >
               Next
             </Button>
           </Box>
@@ -144,23 +190,14 @@ function SignupPage() {
               Sign Up - Step 2
             </Typography>
 
-            <TextField
-              label="Name"
-              type="text"
-              required
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <label htmlFor="dob-picker">Date of Birth*</label>
             <DatePicker
               id="dob-picker"
               selected={dob}
               onChange={(date) => setDob(date)}
               dateFormat="d MMM, yyyy"
-              placeholderText="Select your Date of Birth (e.g., 15 Jan, 1995)"
-              className="react-datepicker-input"
+              placeholderText="Date of Birth* (mm/dd/yyyy)"
+              className="custom-datepicker"
+              wrapperClassName="custom-signup-datepicker-wrapper"
             />
 
             <TextField

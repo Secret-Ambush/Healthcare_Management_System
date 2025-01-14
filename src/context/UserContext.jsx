@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useState, useContext } from "react";
 
-const UserContext = createContext();
+// Create the UserContext
+export const UserContext = createContext();
 
+// Create a provider component
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // State to hold user info
 
   return (
     <UserContext.Provider value={{ user, setUser }}>
@@ -12,4 +14,5 @@ export const UserProvider = ({ children }) => {
   );
 };
 
+// Custom hook to use UserContext
 export const useUser = () => useContext(UserContext);
