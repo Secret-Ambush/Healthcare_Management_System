@@ -38,6 +38,9 @@ const Navbar = () => {
 
           {user ? (
             <>
+              <Link to="/medical" className="text-white text-lg hover:underline">
+                My Records
+              </Link>
               <Link to="/profile" className="text-white text-lg hover:underline">
                 Profile
               </Link>

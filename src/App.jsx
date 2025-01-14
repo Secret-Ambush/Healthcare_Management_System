@@ -6,6 +6,7 @@ import HospitalSearch from "./pages/HospitalSearch";
 import SignupPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 import Profile from './pages/Profile';
+import TestUpload from './pages/MedicalRecords';
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/sign-up" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/medical" element={<TestUpload />} />
           <Route path="*" element={<h1>Page Not Found</h1>} />
         </Routes>
       </Router>
