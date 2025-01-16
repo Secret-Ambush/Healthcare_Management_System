@@ -50,7 +50,7 @@ const DragNdrop = ({
               <p>Drag and drop your files here</p>
               <p>
                 Limit 15MB per file. Supported files: .PDF, .DOCX, .PPTX, .TXT,
-                .XLSX
+                .XLSX, .JPG, .JPEG, .PNG
               </p>
             </div>
           </div>
@@ -59,7 +59,7 @@ const DragNdrop = ({
             hidden
             id="browse"
             onChange={handleFileChange}
-            accept=".pdf,.docx,.pptx,.txt,.xlsx"
+            accept=".pdf,.docx,.pptx,.txt,.xlsx,.jpg,.jpeg,.png"
             multiple
           />
           <label htmlFor="browse" className="browse-btn">
@@ -68,13 +68,12 @@ const DragNdrop = ({
         </>
 
         {files.length > 0 && (
-          <div className="file-list">
+          <div className="file-list" style={{ maxHeight: "190px", overflowY: "auto" }}>
             <div className="file-list__container">
               {files.map((file, index) => (
                 <div className="file-item" key={index}>
                   <div className="file-info">
                     <p>{file.name}</p>
-                    {/* <p>{file.type}</p> */}
                   </div>
                   <div className="file-actions">
                     <MdClear onClick={() => handleRemoveFile(index)} />
@@ -82,15 +81,6 @@ const DragNdrop = ({
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {files.length > 0 && (
-          <div className="success-file">
-            <AiOutlineCheckCircle
-              style={{ color: "#6DC24B", marginRight: 1 }}
-            />
-            <p>{files.length} file(s) selected</p>
           </div>
         )}
       </div>
