@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { uploadFile } from "../firebaseStorage";
-import { Container, Box, Typography, Grid, Button, Card, CardContent, CardMedia } from '@mui/material';
+import { Container, Box, Typography, Grid, Button, Card, CardContent, CardMedia, TextField } from '@mui/material';
 import { getAuth } from "firebase/auth";
 import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
@@ -15,13 +15,13 @@ const getFileIcon = (fileName) => {
   const extension = fileName.split(".").pop().toLowerCase();
   switch (extension) {
     case "pdf": return <PictureAsPdf sx={{ fontSize: 60, color: "red" }} />;
-    case "docx": case "txt": return <Description sx={{ fontSize: 60, color: "blue" }} />;
     case "jpg": case "jpeg": case "png": return <Image sx={{ fontSize: 60, color: "green" }} />;
     default: return <InsertDriveFile sx={{ fontSize: 60, color: "gray" }} />;
   }
 };
 
 const MedicalRecords = () => {
+  const [editFile, setEditFile] = useState(null);
   const [files, setFiles] = useState([]);
   const [fileDetails, setFileDetails] = useState({});
   const [uploadedUrls, setUploadedUrls] = useState([]);
@@ -58,6 +58,27 @@ const MedicalRecords = () => {
     setFiles(selectedFiles);
   };
 
+  const handleEdit = (file) => {
+    setEditFile(file);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editFile && user) {
+      try {
+        const fileRef = ref(storage, `${user.uid}/health-records/${editFile.name}`);
+        await uploadFile(editFile, user.uid);
+        setUploadedUrls((prev) => prev.map(file => file.name === editFile.name ? editFile : file));
+        setEditFile(null);
+      } catch (error) {
+        console.error("Failed to save file details:", error.message);
+      }
+    }
+  };
+
+  const handleCloseEdit = () => {
+    setEditFile(null);
+  };
+
   const handleUpload = async () => {
     if (files.length > 0 && user) {
       setIsUploading(true);
@@ -81,7 +102,7 @@ const MedicalRecords = () => {
       setFiles([]);
       setFileDetails({});
       setIsUploading(false);
-      alert("Files uploaded successfully!");
+      window.location.reload();
     } else {
       alert("No files selected or user not authenticated.");
     }
@@ -120,20 +141,27 @@ const MedicalRecords = () => {
           {uploadedUrls.map((file, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 3, height: "100%" }}>
-                {!(file.url.includes('.pdf') || file.url.includes('.jpg') || file.url.includes('.jpeg') || file.url.includes('.png')) && getFileIcon(file.name)}
+                {!getFileIcon(file.name)}
                 <CardMedia
-                  component={file.url.endsWith('.pdf') ? 'iframe' : 'img'}
+                  component={["jpg", "jpeg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
                   src={file.url}
                   sx={{ width: '100%', height: 150, objectFit: 'cover' }}
                 />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', pr: 2, mt: -2 }}>
+                  <Box sx={{ backgroundColor: file.label ? '#4caf50' : '#ddd', color: file.label ? '#fff' : '#555', borderRadius: '12px', padding: '4px 10px', fontSize: '12px' }}>
+                    {file.label || 'Not Classified Yet'}
+                  </Box>
+                </Box>
                 <CardContent sx={{ textAlign: "center" }}>
                   <Typography variant="body1" sx={{ fontWeight: "bold" }}>{file.name}</Typography>
-                  <Typography variant="body2" sx={{ color: "gray" }}>Label: {file.label || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Hospital: {file.hospital || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Comments: {file.comments || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Uploaded on: {file.date}</Typography>
-                  <Button href={file.url} target="_blank" rel="noopener noreferrer" variant="contained" color="primary" size="small">
+                  <Button onClick={() => window.open(file.url, "_blank")} variant="contained" color="primary" size="small">
                     View
+                  </Button>
+                  <Button onClick={() => handleEdit(file)} variant="contained" color="secondary" size="small" sx={{ ml: 1 }}>
+                    Edit
                   </Button>
                 </CardContent>
               </Card>
@@ -141,6 +169,24 @@ const MedicalRecords = () => {
           ))}
         </Grid>
       </Container>
+      {editFile && (
+        <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Card sx={{ display: 'flex', width: 800, height: 600, padding: 2, backgroundColor: '#fff' }}>
+            <CardMedia
+              component={["jpg", "jpeg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+              src={editFile.url}
+              sx={{ width: '50%', height: '100%', objectFit: 'cover' }}
+            />
+            <CardContent sx={{ width: '50%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="h6">Edit File Details</Typography>
+              <TextField label="Label" fullWidth value={editFile.label || ''} onChange={(e) => setEditFile({...editFile, label: e.target.value})} />
+              <TextField label="Hospital" fullWidth value={editFile.hospital || ''} onChange={(e) => setEditFile({...editFile, hospital: e.target.value})} />
+              <TextField label="Comments" multiline rows={3} fullWidth value={editFile.comments || ''} onChange={(e) => setEditFile({...editFile, comments: e.target.value})} />
+              <Button variant="contained" color="primary" onClick={handleSaveEdit}>Save</Button>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
       <Footer />
     </div>
   );
