@@ -141,18 +141,11 @@ const MedicalRecords = () => {
           {uploadedUrls.map((file, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 3, height: "100%" }}>
-                {!getFileIcon(file.name)}
-                <CardMedia
-                  component={["jpg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
-                  src={file.url}
-                  sx={{ width: '100%', height: 150, objectFit: 'cover' }}
-                />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', pr: 2, mt: -2 }}>
-                  <Box sx={{ backgroundColor: file.label ? '#4caf50' : '#ddd', color: file.label ? '#fff' : '#555', borderRadius: '12px', padding: '4px 10px', fontSize: '12px' }}>
-                    {file.label || 'Not Classified Yet'}
-                  </Box>
-                </Box>
                 <CardContent sx={{ textAlign: "center" }}>
+                <CardMedia
+                    component={["jpg", "jpeg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+                    src={file.url}
+                  />
                   <Typography variant="body1" sx={{ fontWeight: "bold" }}>{file.name}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Hospital: {file.hospital || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Comments: {file.comments || 'N/A'}</Typography>
@@ -173,7 +166,7 @@ const MedicalRecords = () => {
         <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Card sx={{ display: 'flex', width: 800, height: 600, padding: 2, backgroundColor: '#fff' }}>
             <CardMedia
-              component={["jpg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+              component={["jpg", "jpeg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
               src={editFile.url}
               sx={{ width: '50%', height: '100%', objectFit: 'cover' }}
             />

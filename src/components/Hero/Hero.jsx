@@ -42,15 +42,6 @@ const Hero = () => {
             >
               A comprehensive one-stop solution for all healthcare related systems.
             </motion.p>
-            <motion.div
-              variants={SlideUp(0.6)}
-              whileInView={"animate"}
-              initial="initial"
-              viewport={{ once: true }}
-              className="bg-primary text-white px-6 py-4 rounded-lg mt-4 w-fit mx-auto md:mx-0 font-bold hover:shadow-lg duration-200"
-            >
-              <button>See how to use it</button>
-            </motion.div>
           </div>
         </div>
 
