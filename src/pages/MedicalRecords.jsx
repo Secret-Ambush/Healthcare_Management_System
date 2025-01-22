@@ -143,7 +143,7 @@ const MedicalRecords = () => {
               <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 3, height: "100%" }}>
                 {!getFileIcon(file.name)}
                 <CardMedia
-                  component={["jpg", "jpeg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+                  component={["jpg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
                   src={file.url}
                   sx={{ width: '100%', height: 150, objectFit: 'cover' }}
                 />
@@ -173,7 +173,7 @@ const MedicalRecords = () => {
         <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Card sx={{ display: 'flex', width: 800, height: 600, padding: 2, backgroundColor: '#fff' }}>
             <CardMedia
-              component={["jpg", "jpeg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+              component={["jpg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
               src={editFile.url}
               sx={{ width: '50%', height: '100%', objectFit: 'cover' }}
             />
