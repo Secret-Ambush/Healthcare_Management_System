@@ -11,15 +11,6 @@ import { PictureAsPdf, Description, Image, InsertDriveFile } from "@mui/icons-ma
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { ClipLoader } from "react-spinners";
 
-const getFileIcon = (fileName) => {
-  const extension = fileName.split(".").pop().toLowerCase();
-  switch (extension) {
-    case "pdf": return <PictureAsPdf sx={{ fontSize: 60, color: "red" }} />;
-    case "jpg": case "jpeg": case "png": return <Image sx={{ fontSize: 60, color: "green" }} />;
-    default: return <InsertDriveFile sx={{ fontSize: 60, color: "gray" }} />;
-  }
-};
-
 const MedicalRecords = () => {
   const [editFile, setEditFile] = useState(null);
   const [files, setFiles] = useState([]);
@@ -31,23 +22,29 @@ const MedicalRecords = () => {
   const user = auth.currentUser;
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      if (user) {
-        setIsLoading(true);
-        const folderRef = ref(storage, `${user.uid}/health-records`);
-        const fileList = await listAll(folderRef);
-        const urls = await Promise.all(
-          fileList.items.map(async (item) => {
-            const url = await getDownloadURL(item);
-            return { name: item.name, url, date: new Date().toLocaleDateString() };
-          })
-        );
-        setUploadedUrls(urls);
-        setIsLoading(false);
-      }
-    };
-    fetchFiles();
-  }, [user]);
+      const fetchFiles = async () => {
+        if (user) {
+          setIsLoading(true);
+          const folderRef = ref(storage, `${user.uid}/health-records`);
+          const fileList = await listAll(folderRef);
+          const urls = await Promise.all(
+            fileList.items.map(async (item) => {
+              return { 
+                name: item.name, 
+                url: await getDownloadURL(item), 
+                date: new Date().toLocaleDateString(), 
+                label: '', 
+                hospital: '', 
+                comments: '' 
+              };
+            })
+          );          
+          setUploadedUrls(urls);
+          setIsLoading(false);
+        }
+      };
+      fetchFiles();
+    }, [user]);
 
   const handleFilesSelected = (selectedFiles) => {
     const newDetails = {};
@@ -59,20 +56,14 @@ const MedicalRecords = () => {
   };
 
   const handleEdit = (file) => {
-    setEditFile(file);
+    setEditFile({ ...file });
   };
 
-  const handleSaveEdit = async () => {
-    if (editFile && user) {
-      try {
-        const fileRef = ref(storage, `${user.uid}/health-records/${editFile.name}`);
-        await uploadFile(editFile, user.uid);
-        setUploadedUrls((prev) => prev.map(file => file.name === editFile.name ? editFile : file));
-        setEditFile(null);
-      } catch (error) {
-        console.error("Failed to save file details:", error.message);
-      }
-    }
+  const handleSaveEdit = () => {
+    setUploadedUrls(prevFiles => prevFiles.map(file =>
+      file.name === editFile.name ? editFile : file
+    ));
+    setEditFile(null);
   };
 
   const handleCloseEdit = () => {
@@ -98,16 +89,16 @@ const MedicalRecords = () => {
           console.error("File upload failed:", error.message);
         }
       }
-      setUploadedUrls(prev => [...prev, ...urls]);
+      setUploadedUrls(prev => [...prev, ...urls]); // Update without reloading
       setFiles([]);
       setFileDetails({});
       setIsUploading(false);
-      window.location.reload();
+      // Remove window.location.reload(); to prevent page reload
     } else {
       alert("No files selected or user not authenticated.");
     }
   };
-
+  
   return (
     <div>
       <Navbar />
@@ -142,22 +133,26 @@ const MedicalRecords = () => {
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 3, height: "100%" }}>
                 <CardContent sx={{ textAlign: "center" }}>
-                <CardMedia
-                    component={["jpg", "jpeg", "png"].includes(file.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
-                    src={file.url}
-                  />
                   <Typography variant="body1" sx={{ fontWeight: "bold" }}>{file.name}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Hospital: {file.hospital || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Comments: {file.comments || 'N/A'}</Typography>
                   <Typography variant="body2" sx={{ color: "gray" }}>Uploaded on: {file.date}</Typography>
-                  <Button onClick={() => window.open(file.url, "_blank")} variant="contained" color="primary" size="small">
-                    View
+                  <Button 
+                    component="a" 
+                    href={file.url} 
+                    target="_blank" 
+                    download={file.name} 
+                    variant="contained" 
+                    color="primary" 
+                    size="small"
+                  >
+                    Download
                   </Button>
                   <Button onClick={() => handleEdit(file)} variant="contained" color="secondary" size="small" sx={{ ml: 1 }}>
                     Edit
                   </Button>
                 </CardContent>
-              </Card>
+                </Card>
             </Grid>
           ))}
         </Grid>
@@ -166,7 +161,7 @@ const MedicalRecords = () => {
         <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Card sx={{ display: 'flex', width: 800, height: 600, padding: 2, backgroundColor: '#fff' }}>
             <CardMedia
-              component={["jpg", "jpeg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
+              component={["jpg", "png"].includes(editFile.name.split(".").pop().toLowerCase()) ? 'img' : 'iframe'}
               src={editFile.url}
               sx={{ width: '50%', height: '100%', objectFit: 'cover' }}
             />
@@ -176,6 +171,7 @@ const MedicalRecords = () => {
               <TextField label="Hospital" fullWidth value={editFile.hospital || ''} onChange={(e) => setEditFile({...editFile, hospital: e.target.value})} />
               <TextField label="Comments" multiline rows={3} fullWidth value={editFile.comments || ''} onChange={(e) => setEditFile({...editFile, comments: e.target.value})} />
               <Button variant="contained" color="primary" onClick={handleSaveEdit}>Save</Button>
+              <Button variant="outlined" color="secondary" onClick={handleCloseEdit}>Cancel</Button>
             </CardContent>
           </Card>
         </Box>
